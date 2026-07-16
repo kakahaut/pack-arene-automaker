@@ -1,9 +1,45 @@
-# Pack Arène AutoMaker
+# 🏹 Pack Arène Automaker
 
-Site statique, **100 % côté navigateur**, aucun serveur ni backend. Tu déposes une archive
-de pack de textures (`.zip`, `.rar`, `.7z`, `.tar`, `.tar.gz`, `.tgz`...), le site :
+Un outil 100% client-side pour adapter automatiquement les packs de textures **NationsGlory** à l'arène PvP du serveur **White**.
 
-1. **Repère le dossier `assets/`**,
-2. **Duplique** les 9 textures concernées sous leur nouveau nom (le fichier d'origine reste
-   en place, rien n'est renommé ni déplacé). Si une texture attendue manque dans le pack, celle par défaut est utilisée.
-3. Renvoie un `.zip` modifié, a juste mettre dans le dossier des packs.
+**Accès direct :** https://kakahaut.github.io/pack-arene-automaker/
+
+---
+
+## 🎯 Objectif
+
+Transformer un pack de textures NationsGlory classique en pack compatible avec l'arène PvP du serveur White, en dupliquant et renommant 9 textures spécifiques.
+
+## 📦 Transformations effectuées
+
+| Original | Adapté pour l'arène |
+|----------|---------------------|
+| Casque & Bottes Eco | Casque & Bottes Fyrite |
+| Visuel d'armure Eco | Visuel d'armure Fyrite |
+| Plastron & Jambières Desh | Casque & Bottes Nécromancien |
+| Visuel d'armure Desh | Visuel d'armure Nécromancien |
+| Épée Démo | Épée Nécromancien |
+
+## 🚀 Utilisation
+
+1. Glisse-dépose ton pack `.zip` dans l'interface
+2. L'outil génère automatiquement un nouveau pack adapté
+3. Télécharge le résultat et installe-le dans ton dossier `resourcepacks`
+
+## ⚙️ Technologie
+
+Basé sur `libarchive.js` (WebAssembly), tout le traitement s'effectue dans ton navigateur.
+
+---
+
+## 👥 Crédits
+
+- **Logique & conception** : moi-même
+- **Code & implémentation** : Claude (Anthropic)
+- **Peaufinage & améliorations** : DeepSeek
+
+Un projet collaboratif entre humain et IA 🤖
+
+---
+
+*Projet open-source — libre d'utilisation et de modification.*
