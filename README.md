@@ -32,6 +32,34 @@ Basé sur `libarchive.js` (WebAssembly), tout le traitement s'effectue dans ton 
 
 ---
 
+## 🐛 Bug ou problème ?
+
+Contacte-moi sur Discord : **@kakahaut_**
+
+## 👥 Crédits
+
+- **Logique & conception** : moi-même
+- **Code & implémentation** : Claude (Anthropic)
+- **Peaufinage & améliorations** : DeepSeek
+
+Un projet collaboratif entre humain et IA 🤖
+
+---
+
+*Projet open-source — libre d'utilisation et de modification.*| Épée Démo | Épée Nécromancien |
+
+## 🚀 Utilisation
+
+1. Glisse-dépose ton pack `.zip` dans l'interface
+2. L'outil génère automatiquement un nouveau pack adapté
+3. Télécharge le résultat et installe-le dans ton dossier `resourcepacks`
+
+## ⚙️ Technologie
+
+Basé sur `libarchive.js` (WebAssembly), tout le traitement s'effectue dans ton navigateur.
+
+---
+
 ## 👥 Crédits
 
 - **Logique & conception** : moi-même
