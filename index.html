@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pack Arène AutoMaker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --bg: #1e1f22;
+    --panel: #2b2d31;
+    --panel-2: #313338;
+    --line: #3f4147;
+    --text: #dbdee1;
+    --text-dim: #949ba4;
+    --ember: #5865f2;
+    --ember-bright: #7983f5;
+    --necro: #23a55a;
+    --necro-dim: #1a7d43;
+    --warn: #f0b232;
+    --error: #f23f42;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(88,101,242,0.14), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(35,165,90,0.08), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    padding:48px 20px 80px;
+  }
+  .wrap{max-width:760px; margin:0 auto;}
+
+  header{margin-bottom:40px;}
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--ember-bright);
+    display:flex; align-items:center; gap:8px;
+    margin-bottom:14px;
+  }
+  .eyebrow .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--ember);
+    box-shadow:0 0 8px 2px rgba(88,101,242,0.7);
+  }
+  h1{
+    font-family:'Inter', sans-serif;
+    font-weight:800;
+    font-size:clamp(30px, 5vw, 42px);
+    line-height:1.1;
+    margin:0 0 14px;
+    letter-spacing:-0.01em;
+  }
+  h1 span{color:var(--necro);}
+  header p{
+    color:var(--text-dim);
+    font-size:15px;
+    line-height:1.6;
+    max-width:58ch;
+    margin:0;
+  }
+  header p code{
+    background:var(--panel-2);
+    padding:1px 6px;
+    border-radius:4px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    color:var(--necro);
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:26px;
+    margin-bottom:22px;
+  }
+  .panel h2{
+    font-family:'Inter', sans-serif;
+    font-size:15px;
+    font-weight:600;
+    margin:0 0 4px;
+  }
+  .panel .sub{color:var(--text-dim); font-size:13px; margin:0 0 18px;}
+
+  .dropzone{
+    border:1.5px dashed var(--line);
+    border-radius:8px;
+    padding:34px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+    background:var(--panel-2);
+  }
+  .dropzone:hover, .dropzone.drag{
+    border-color:var(--ember);
+    background:rgba(88,101,242,0.08);
+  }
+  .dropzone.filled{
+    border-color:var(--necro-dim);
+    background:rgba(35,165,90,0.07);
+  }
+  .dropzone input{display:none;}
+  .dz-title{font-family:'Inter', sans-serif; font-weight:600; font-size:16px; margin-bottom:6px;}
+  .dz-sub{color:var(--text-dim); font-size:13px;}
+  .dz-filename{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    color:var(--necro);
+    margin-top:10px;
+    word-break:break-all;
+  }
+
+  button.primary{
+    width:100%;
+    margin-top:18px;
+    padding:14px;
+    background:var(--ember);
+    color:#1a0f06;
+    border:none;
+    border-radius:7px;
+    font-family:'Inter', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    transition:background .15s ease, transform .1s ease;
+    letter-spacing:0.01em;
+  }
+  button.primary:hover:not(:disabled){background:var(--ember-bright);}
+  button.primary:active:not(:disabled){transform:scale(0.99);}
+  button.primary:disabled{
+    background:var(--panel-2);
+    color:var(--text-dim);
+    cursor:not-allowed;
+    border:1px solid var(--line);
+  }
+
+  .forge-status{
+    display:none;
+    align-items:center;
+    gap:10px;
+    margin-top:16px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    color:var(--ember-bright);
+  }
+  .forge-status.active{display:flex;}
+  .ember-pulse{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--ember);
+    box-shadow:0 0 10px 3px rgba(88,101,242,0.8);
+    animation:pulse 1s ease-in-out infinite;
+    flex-shrink:0;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:0.4; transform:scale(0.85);}
+    50%{opacity:1; transform:scale(1.15);}
+  }
+
+  .log{
+    background:#0d0b0a;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:16px 18px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    line-height:1.75;
+    max-height:320px;
+    overflow-y:auto;
+    display:none;
+    margin-top:16px;
+  }
+  .log.active{display:block;}
+  .log .line{white-space:pre-wrap; word-break:break-word;}
+  .log .ok{color:var(--necro);}
+  .log .fallback{color:#c78bd9;}
+  .log .warn{color:var(--warn);}
+  .log .error{color:var(--error);}
+  .log .info{color:var(--text-dim);}
+
+  .result{
+    display:none;
+    margin-top:16px;
+    padding:16px;
+    background:rgba(35,165,90,0.08);
+    border:1px solid var(--necro-dim);
+    border-radius:8px;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .result.active{display:flex;}
+  .result .rtext{font-size:13.5px; color:var(--text);}
+  .result .rtext b{color:var(--necro); font-family:'JetBrains Mono', monospace; font-weight:500;}
+  a.dl{
+    background:var(--necro);
+    color:#0d1a10;
+    font-family:'Inter', sans-serif;
+    font-weight:700;
+    font-size:13.5px;
+    padding:10px 18px;
+    border-radius:6px;
+    text-decoration:none;
+    white-space:nowrap;
+  }
+  a.dl:hover{background:#98e6b0;}
+
+  .formats{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:14px;
+  }
+  .formats span{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--text-dim);
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:3px 8px;
+  }
+
+  footer{
+    margin-top:36px;
+    text-align:center;
+    color:var(--text-dim);
+    font-size:12px;
+    font-family:'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow"><span class="dot"></span>Outil local — rien ne quitte ton navigateur</div>
+    <h1>Adapte ton pack pour <span>l'arène white</span></h1>
+    <p>Dépose l'archive de ton pack de textures. L'outil s'occupe de remplacer les
+    Armures / Épée pour rendre le pack utilisable en arène white.</p>
+    <div class="formats">
+      <span>.zip</span><span>.rar</span><span>.7z</span><span>.tar</span><span>.tar.gz</span><span>.tgz</span>
+    </div>
+  </header>
+
+  <div class="panel">
+    <h2>Pack à traiter</h2>
+    <p class="sub">L'archive complète de ton resource pack, n'importe quel format ci-dessus</p>
+    <div class="dropzone" id="dz-pack">
+      <input type="file" id="input-pack" accept=".zip,.rar,.7z,.tar,.tar.gz,.tgz,.tar.bz2">
+      <div class="dz-title">Glisse ton archive ici</div>
+      <div class="dz-sub">ou clique pour parcourir</div>
+      <div class="dz-filename" id="pack-filename"></div>
+    </div>
+
+    <button class="primary" id="btn-process" disabled>Sélectionne une archive pour continuer</button>
+
+    <div class="forge-status" id="forge-status">
+      <div class="ember-pulse"></div>
+      <span id="forge-status-text">Traitement en cours…</span>
+    </div>
+
+    <div class="log" id="log"></div>
+
+    <div class="result" id="result">
+      <div class="rtext">Pack modifié prêt — <b id="result-count"></b></div>
+      <a href="#" class="dl" id="dl-link" download>Télécharger le .zip</a>
+    </div>
+  </div>
+
+  <footer>pack-arene-maker · traitement 100% local dans ton navigateur, aucun serveur</footer>
+</div>
+
+<script type="module">
+import { Archive } from './vendor/libarchive/libarchive.js';
+
+Archive.init({ workerUrl: './vendor/libarchive/worker-bundle.js' });
+
+// ---- Règles : chemins relatifs à la racine du pack (là où se trouve assets/) ----
+// duplicate = on garde le fichier source ET on crée le fichier destination
+const RULES = [
+  { src: "assets/nationsglory/textures/items/demonic_sword.png",
+    dst: "assets/ngcontent/textures/items/necromantine_sword.png",
+    fallback: "demonic_sword.png" },
+
+  { src: "assets/ngcontent/textures/items/eco_boots.png",
+    dst: "assets/ngcontent/textures/items/reinforced_fyrite_boots.png",
+    fallback: "eco_boots.png" },
+
+  { src: "assets/ngcontent/textures/items/eco_helmet.png",
+    dst: "assets/ngcontent/textures/items/reinforced_fyrite_helmet.png",
+    fallback: "eco_helmet.png" },
+
+  { src: "assets/ngcontent/textures/armors/eco_layer_1.png",
+    dst: "assets/ngcontent/textures/armors/reinforced_fyrite_layer_1.png",
+    fallback: "eco_layer_1.png" },
+
+  { src: "assets/ngcontent/textures/armors/eco_layer_2.png",
+    dst: "assets/ngcontent/textures/armors/reinforced_fyrite_layer_2.png",
+    fallback: "eco_layer_2.png" },
+
+  { src: "assets/minecraft/textures/model/armor/desh_2.png",
+    dst: "assets/ngcontent/textures/armors/necromantine_layer_1.png",
+    fallback: "desh_2.png" },
+
+  { src: "assets/minecraft/textures/model/armor/desh_3.png",
+    dst: "assets/ngcontent/textures/armors/necromantine_layer_2.png",
+    fallback: "desh_3.png" },
+
+  { src: "assets/galacticraftmars/textures/items/deshChestplate.png",
+    dst: "assets/ngcontent/textures/items/necromantine_chestplate.png",
+    fallback: "deshChestplate.png" },
+
+  { src: "assets/galacticraftmars/textures/items/deshLeggings.png",
+    dst: "assets/ngcontent/textures/items/necromantine_leggings.png",
+    fallback: "deshLeggings.png" },
+];
+
+const FALLBACK_BASE = "./fallback/";
+
+// ---- Crédit ajouté au pack.mcmeta — modifie ces deux lignes si besoin ----
+const CREDIT_TEXT = "Arène version by Kakahaut";
+const CREDIT_COLOR = "red"; // couleur pour la version "texte enrichi" du description
+
+const dzPack = document.getElementById('dz-pack');
+const inputPack = document.getElementById('input-pack');
+const packFilename = document.getElementById('pack-filename');
+const btnProcess = document.getElementById('btn-process');
+const forgeStatus = document.getElementById('forge-status');
+const forgeStatusText = document.getElementById('forge-status-text');
+const logEl = document.getElementById('log');
+const resultEl = document.getElementById('result');
+const resultCount = document.getElementById('result-count');
+const dlLink = document.getElementById('dl-link');
+
+let packFile = null;
+// true une fois qu'un pack a été traité avec succès : le bouton sert alors
+// à repartir de zéro pour un nouveau pack, plutôt qu'à relancer le même traitement.
+let hasResult = false;
+
+function setupDropzone(dz, input, onFile){
+  dz.addEventListener('click', () => input.click());
+  input.addEventListener('change', e => { if(e.target.files[0]) onFile(e.target.files[0]); });
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag');
+    if(e.dataTransfer.files[0]) onFile(e.dataTransfer.files[0]);
+  });
+}
+
+setupDropzone(dzPack, inputPack, file => {
+  packFile = file;
+  hasResult = false;
+  packFilename.textContent = file.name;
+  dzPack.classList.add('filled');
+  btnProcess.disabled = false;
+  btnProcess.textContent = 'Lancer la modification du pack';
+  resultEl.classList.remove('active');
+  logEl.classList.remove('active');
+  logEl.innerHTML = '';
+});
+
+function resetForNewPack(){
+  packFile = null;
+  hasResult = false;
+  inputPack.value = '';
+  packFilename.textContent = '';
+  dzPack.classList.remove('filled');
+  resultEl.classList.remove('active');
+  logEl.classList.remove('active');
+  logEl.innerHTML = '';
+  btnProcess.disabled = true;
+  btnProcess.textContent = 'Sélectionne une archive pour continuer';
+}
+
+function log(msg, cls){
+  const div = document.createElement('div');
+  div.className = 'line ' + (cls || 'info');
+  div.textContent = msg;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+async function fetchFallback(name){
+  try{
+    const res = await fetch(FALLBACK_BASE + name);
+    if(!res.ok) return null;
+    return await res.arrayBuffer();
+  }catch(e){
+    return null;
+  }
+}
+
+// Aplatit l'arbre imbriqué que renvoie libarchive.js (dossier -> {nom: File|dossier})
+async function flattenTree(node, prefix, out){
+  for(const [name, value] of Object.entries(node)){
+    if(value instanceof Blob){
+      out.push({ path: prefix + name, blob: value });
+    }else{
+      await flattenTree(value, prefix + name + '/', out);
+    }
+  }
+}
+
+// Charge n'importe quelle archive supportée et renvoie un JSZip "brut" (structure inchangée)
+async function loadRawZip(file){
+  const name = file.name.toLowerCase();
+
+  if(name.endsWith('.zip')){
+    try{
+      return await JSZip.loadAsync(file);
+    }catch(e){
+      log('Lecture .zip directe impossible, nouvel essai via le moteur générique…', 'warn');
+    }
+  }
+
+  forgeStatusText.textContent = "Décompression de l'archive (premier chargement du moteur, ça peut prendre un instant)…";
+  const archive = await Archive.open(file);
+  const tree = await archive.extractFiles();
+  const flat = [];
+  await flattenTree(tree, '', flat);
+
+  if(flat.length === 0){
+    throw new Error("L'archive semble vide ou dans un format non reconnu.");
+  }
+
+  const zip = new JSZip();
+  for(const entry of flat){
+    const buf = await entry.blob.arrayBuffer();
+    zip.file(entry.path, buf);
+  }
+  return zip;
+}
+
+// Trouve le préfixe à retirer pour que "assets/" se retrouve à la racine
+function findRootPrefix(paths){
+  for(const raw of paths){
+    const p = raw.replace(/^\.\/+/, '');
+    if(/^assets\//.test(p)) return '';
+    const m = p.match(/^([^/]+)\/assets\//);
+    if(m) return m[1] + '/';
+  }
+  return null;
+}
+
+const JUNK_RE = /(^|\/)(__MACOSX|\.DS_Store|Thumbs\.db|desktop\.ini)(\/|$)/i;
+
+// Reconstruit un JSZip "propre" : racine du pack ramenée à la racine du zip, pas de dossier wrapper
+async function buildWorkZip(rawZip){
+  const rootPrefix = findRootPrefix(Object.keys(rawZip.files));
+  if(rootPrefix === null){
+    throw new Error("Aucun dossier « assets » trouvé (ni à la racine, ni dans un premier sous-dossier).");
+  }
+  log(rootPrefix
+    ? '📂 Racine du pack détectée dans le sous-dossier : ' + rootPrefix
+    : '📂 Racine du pack détectée à la racine de l\'archive', 'info');
+
+  const workZip = new JSZip();
+  for(const [full, entry] of Object.entries(rawZip.files)){
+    if(entry.dir) continue;
+    const clean = full.replace(/^\.\/+/, '');
+    if(rootPrefix && !clean.startsWith(rootPrefix)) continue;
+    const rel = rootPrefix ? clean.slice(rootPrefix.length) : clean;
+    if(!rel || JUNK_RE.test(rel)) continue;
+    const content = await entry.async('arraybuffer');
+    workZip.file(rel, content);
+  }
+  return workZip;
+}
+
+async function applyRules(workZip){
+  let done = 0, fallbackUsed = 0, missing = 0;
+
+  for(const rule of RULES){
+    forgeStatusText.textContent = 'Duplication : ' + rule.dst.split('/').pop();
+    const srcEntry = workZip.file(rule.src);
+
+    if(srcEntry){
+      const content = await srcEntry.async('arraybuffer');
+      workZip.file(rule.dst, content);
+      log('✓ dupliqué : ' + rule.src.split('/').pop() + '  →  ' + rule.dst.split('/').pop(), 'ok');
+      done++;
+      continue;
+    }
+
+    const fb = await fetchFallback(rule.fallback);
+    if(fb){
+      workZip.file(rule.dst, fb);
+      log('↺ repli : ' + rule.fallback + '  →  ' + rule.dst.split('/').pop(), 'fallback');
+      fallbackUsed++;
+      continue;
+    }
+
+    log('⚠ introuvable (ni pack, ni repli) : ' + rule.src.split('/').pop(), 'warn');
+    missing++;
+  }
+
+  return { done, fallbackUsed, missing };
+}
+
+async function addCreditToMcmeta(workZip){
+  const entry = workZip.file('pack.mcmeta');
+  if(!entry){
+    log('⚠ pack.mcmeta introuvable, crédit non ajouté', 'warn');
+    return false;
+  }
+  try{
+    const text = await entry.async('string');
+    const data = JSON.parse(text);
+    if(!data.pack || typeof data.pack !== 'object') data.pack = {};
+
+    const desc = data.pack.description;
+    if(desc === undefined || desc === null || desc === ''){
+      data.pack.description = CREDIT_TEXT;
+    }else if(typeof desc === 'string'){
+      data.pack.description = desc + '\n' + CREDIT_TEXT;
+    }else if(Array.isArray(desc)){
+      data.pack.description = [...desc, '\n', { text: CREDIT_TEXT, color: CREDIT_COLOR }];
+    }else{
+      data.pack.description = [desc, '\n', { text: CREDIT_TEXT, color: CREDIT_COLOR }];
+    }
+
+    workZip.file('pack.mcmeta', JSON.stringify(data, null, 2));
+    log('✓ pack.mcmeta mis à jour : crédit ajouté', 'ok');
+    return true;
+  }catch(e){
+    log('⚠ pack.mcmeta illisible (JSON invalide), crédit non ajouté : ' + e.message, 'warn');
+    return false;
+  }
+}
+
+function buildOutputName(originalName){
+  let base = originalName.replace(/\.(tar\.gz|tar\.bz2|tar\.xz|tgz|tbz2|zip|rar|7z|tar)$/i, '');
+  base = base.replace(/^[!\s]+/, ''); // pas de "!" ni d'espace au début
+  if(!base) base = 'pack';
+  return base + ' [Arène].zip';
+}
+
+btnProcess.addEventListener('click', async () => {
+  // Si un résultat est déjà affiché, ce clic sert à repartir sur un nouveau pack,
+  // pas à relancer le même traitement (déterministe : ça ne changerait rien).
+  if(hasResult){
+    resetForNewPack();
+    return;
+  }
+
+  if(!packFile) return;
+
+  btnProcess.disabled = true;
+  forgeStatus.classList.add('active');
+  logEl.classList.add('active');
+  logEl.innerHTML = '';
+  resultEl.classList.remove('active');
+
+  try{
+    forgeStatusText.textContent = "Lecture de l'archive…";
+    const rawZip = await loadRawZip(packFile);
+    log('Archive chargée : ' + packFile.name, 'info');
+
+    forgeStatusText.textContent = 'Repérage du dossier assets…';
+    const workZip = await buildWorkZip(rawZip);
+
+    const { done, fallbackUsed, missing } = await applyRules(workZip);
+
+    forgeStatusText.textContent = 'Mise à jour du pack.mcmeta…';
+    await addCreditToMcmeta(workZip);
+
+    forgeStatusText.textContent = 'Compression du .zip final…';
+    const blob = await workZip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+
+    const outName = buildOutputName(packFile.name);
+    dlLink.href = URL.createObjectURL(blob);
+    dlLink.download = outName;
+
+    let summary = done + ' dupliqués';
+    if(fallbackUsed) summary += ', ' + fallbackUsed + ' en repli';
+    if(missing) summary += ', ' + missing + ' manquants';
+    resultCount.textContent = summary;
+    resultEl.classList.add('active');
+
+    log('Terminé — ' + summary + '. Fichier prêt : ' + outName, missing ? 'warn' : 'ok');
+    hasResult = true;
+
+  }catch(err){
+    log('Erreur : ' + err.message, 'error');
+  }finally{
+    forgeStatus.classList.remove('active');
+    btnProcess.disabled = false;
+    btnProcess.textContent = hasResult ? 'Modifier un autre pack' : 'Lancer la modification du pack';
+  }
+});
+</script>
+</body>
+</html>
